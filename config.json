@@ -1,0 +1,16 @@
+{
+	// The Atlassian Command Line Interface executable
+	"acli_command": "acli.sh",
+	// The ACLI connection name for confluence (as defined in acli.properties)
+	"acli_connection": "confluence.di2e",
+	// The Confluence space to write to
+	"confluence_space": "DFNTC",
+	// The ID of the root Confluence page to populate with README.md content
+	// and hang all other pages under. All children of this page that do not
+	// exist in markdown will be pruned.
+	"parent_page_id": "787291112",
+	// The base url of direct links to the markdown files (e.g. the Bitbucket URL)
+	"base_markdown_url": "https://bitbucket.di2e.net/users/ryan.kenney/repos/dfntc-notes/browse/",
+	// The local directory of markdown files to be synced
+	"markdown_dir": "/home/user/dev/wiki/dfntc-notes"
+}
