@@ -12,5 +12,7 @@
 	// The base url of direct links to the markdown files (e.g. the Bitbucket URL)
 	"base_markdown_url": "https://bitbucket.di2e.net/users/ryan.kenney/repos/dfntc-notes/browse/",
 	// The local directory of markdown files to be synced
-	"markdown_dir": "/home/user/dev/wiki/dfntc-notes"
+	"markdown_dir": "/home/user/dev/wiki/dfntc-notes",
+	// Max parallel Confluence requests
+	"confluence_threads": 10
 }

@@ -4,6 +4,7 @@ import argparse
 import json
 import subprocess
 import hashlib
+from multiprocessing import Pool
 
 # A version of argparse.ArgumentParser, that report errors
 # with a non-zero exit code
@@ -101,7 +102,6 @@ def _process_markdown_file(acli_command, acli_connection, confluence_space, pare
 	with open(markdown_hash_file, 'w') as f:
 		f.write(markdown_hash)
 
-
 def _generate_confluence_content(markdown_file, confluence_file, base_markdown_url):
 	header = """
 # !!! ATTENTION !!! See [%s](%s%s)
@@ -136,9 +136,9 @@ def _update_confluence_page_as_child(acli_command, acli_connection, confluence_s
 		'--title', title,
 		'--markdown',
 		'--file', str(content_file)])
-	content_file.unlink()
 
-def _delete_confluence_page(acli_command, acli_connection, page_id):
+def _delete_confluence_page(acli_command, acli_connection, page_id, page_title):
+	print('Deleting: '+page_title)
 	_exec([
 		acli_command, acli_connection,
 		'--action', 'removePage',
@@ -157,6 +157,17 @@ def _read_hash(file):
 		for byte_block in iter(lambda: f.read(4096),b""):
 			sha256_hash.update(byte_block)
 		return sha256_hash.hexdigest()
+
+def join_throwing_any_exception(worker_pool, jobs):
+	worker_pool.close()
+	# Check for exceptions on any jobs (as soon as possible--before join)
+	for job in jobs:
+		job.get()
+	worker_pool.join()
+
+# This would be an in-line lambda, if multiprocessing could use one
+def _lambda_update_confluence_page_by_id(acli_command, acli_connection, parent_page_id, confluence_space, temp_content_file):
+	_update_confluence_page_as_child(acli_command, acli_connection, confluence_space, parent_page_id, markdown_filename, temp_content_file)
 
 def _main():
 	config = _parse_args_or_exit()
@@ -183,13 +194,15 @@ def _main():
 		config['base_markdown_url'],
 		source_dir,
 		temp_dir, 
-		'README.md', 
+		'README.md',
 		lambda acli_command, acli_connection, parent_page_id, confluence_space, temp_content_file:
 			_update_confluence_page_by_id(acli_command, acli_connection, parent_page_id, temp_content_file))
 
 	# Create/update all other .md files
+	worker_pool = Pool(processes=config['confluence_threads'])
+	jobs = []
 	for markdown_filename in markdown_files:
-		_process_markdown_file(
+		job = worker_pool.apply_async(_process_markdown_file, [
 			config['acli_command'],
 			config['acli_connection'],
 			config['confluence_space'],
@@ -197,10 +210,10 @@ def _main():
 			config['base_markdown_url'],
 			source_dir,
 			temp_dir,
-			markdown_filename, 
-			lambda acli_command, acli_connection, parent_page_id, confluence_space, temp_content_file:
-				_update_confluence_page_as_child(
-					acli_command, acli_connection, confluence_space, parent_page_id, markdown_filename, temp_content_file))
+			markdown_filename,
+			_lambda_update_confluence_page_by_id])
+		jobs.append(job)
+	join_throwing_any_exception(worker_pool, jobs)
 
 	print('')
 	print('[[ Reading Page List from Confluence ]]')
@@ -223,13 +236,12 @@ def _main():
 	# Delete any confluence pages that do not exist as markdown files
 	for confluence_child_page in confluence_child_pages:
 		# NOTE: We prune 'README.md' as well, since this is the parent page's content
-		if confluence_child_page['Title'] == 'README.md' or
-			confluence_child_page['Title'] not in markdown_files_set:
-			print('Deleting: '+confluence_child_page['Title'])
+		if (confluence_child_page['Title'] == 'README.md') or (confluence_child_page['Title'] not in markdown_files_set):
 			_delete_confluence_page(
 				config['acli_command'],
 				config['acli_connection'],
-				str(confluence_child_page['Id']))
+				str(confluence_child_page['Id']),
+				confluence_child_page['Title'])
 
 	print('')
 	print('[[ Complete ]]')
