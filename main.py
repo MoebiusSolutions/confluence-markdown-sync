@@ -75,23 +75,25 @@ def _process_markdown_file(acli_command, acli_connection, confluence_space, pare
 	temp_content_file = temp_dir/(markdown_filename+'.confluence')
 	markdown_hash_file = temp_dir/(markdown_filename+'.lastSynced')
 
+	# Generate the content for Confluence
+	_generate_confluence_content(
+		markdown_file, temp_content_file, markdown_header_template)
+
 	# Read file hashes
-	markdown_hash = _read_hash(markdown_file)
+	new_markdown_hash = _read_hash(temp_content_file)
 	previous_markdown_hash = ''
 	if markdown_hash_file.exists():
 		with open(markdown_hash_file, 'r') as f:
 			previous_markdown_hash = f.read()
 
 	# Stop if content hasn't changed
-	if markdown_hash == previous_markdown_hash:
+	if new_markdown_hash == previous_markdown_hash:
 		print('Skipping (already synced): '+markdown_filename)
 		return
 	else:
 		print('Updating: '+markdown_filename)
 
 	# Update the page
-	_generate_confluence_content(
-		markdown_file, temp_content_file, markdown_header_template)
 	update_confluence_page(
 		acli_command,
 		acli_connection,
@@ -102,7 +104,7 @@ def _process_markdown_file(acli_command, acli_connection, confluence_space, pare
 
 	# Store the last-synced hash
 	with open(markdown_hash_file, 'w') as f:
-		f.write(markdown_hash)
+		f.write(new_markdown_hash)
 
 def _generate_confluence_content(markdown_file, confluence_file, markdown_header_template):
 	with open(markdown_header_template, 'r') as f:
@@ -110,6 +112,7 @@ def _generate_confluence_content(markdown_file, confluence_file, markdown_header
 	with open(confluence_file, 'w') as f:
 		f.write(template.render(markdown_filename=markdown_file.name))
 	with open(confluence_file, 'a') as out_file:
+		out_file.write('\n')
 		with open(markdown_file) as in_file:
 			for line in in_file:
 				out_file.write(line)
