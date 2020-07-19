@@ -5,6 +5,7 @@ import json
 import subprocess
 import hashlib
 from multiprocessing import Pool
+import jinja2
 
 # A version of argparse.ArgumentParser, that report errors
 # with a non-zero exit code
@@ -68,7 +69,7 @@ def _get_confluence_child_pages(page_list_dump_file, parent_page_id):
 		child_pages.append(child_page)
 	return child_pages
 
-def _process_markdown_file(acli_command, acli_connection, confluence_space, parent_page_id, base_markdown_url, source_dir, temp_dir, markdown_filename, update_confluence_page):
+def _process_markdown_file(acli_command, acli_connection, confluence_space, parent_page_id, markdown_header_template, source_dir, temp_dir, markdown_filename, update_confluence_page):
 
 	markdown_file = source_dir/markdown_filename
 	temp_content_file = temp_dir/(markdown_filename+'.confluence')
@@ -90,7 +91,7 @@ def _process_markdown_file(acli_command, acli_connection, confluence_space, pare
 
 	# Update the page
 	_generate_confluence_content(
-		markdown_file, temp_content_file, base_markdown_url)
+		markdown_file, temp_content_file, markdown_header_template)
 	update_confluence_page(
 		acli_command,
 		acli_connection,
@@ -103,18 +104,11 @@ def _process_markdown_file(acli_command, acli_connection, confluence_space, pare
 	with open(markdown_hash_file, 'w') as f:
 		f.write(markdown_hash)
 
-def _generate_confluence_content(markdown_file, confluence_file, base_markdown_url):
-	header = """
-# !!! ATTENTION !!! See [%s](%s%s)
-
-> This page is generated for Confluence search results only.
-> 
-> Follow the above link for the actual page.
-> 
-
-"""  % (markdown_file.name, base_markdown_url, markdown_file.name)
-	with open(confluence_file, 'w') as out_file:
-		out_file.write(header)
+def _generate_confluence_content(markdown_file, confluence_file, markdown_header_template):
+	with open(markdown_header_template, 'r') as f:
+		template = jinja2.Template(f.read())
+	with open(confluence_file, 'w') as f:
+		f.write(template.render(markdown_filename=markdown_file.name))
 	with open(confluence_file, 'a') as out_file:
 		with open(markdown_file) as in_file:
 			for line in in_file:
@@ -192,7 +186,7 @@ def _main():
 		config['acli_connection'],
 		config['confluence_space'],
 		config['parent_page_id'],
-		config['base_markdown_url'],
+		config['markdown_header_template'],
 		source_dir,
 		temp_dir, 
 		'README.md',
@@ -208,7 +202,7 @@ def _main():
 			config['acli_connection'],
 			config['confluence_space'],
 			config['parent_page_id'],
-			config['base_markdown_url'],
+			config['markdown_header_template'],
 			source_dir,
 			temp_dir,
 			markdown_filename,

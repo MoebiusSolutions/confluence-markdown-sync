@@ -11,6 +11,9 @@
 	"parent_page_id": "787291112",
 	// The base url of direct links to the markdown files (e.g. the Bitbucket URL)
 	"base_markdown_url": "https://bitbucket.example.net/projects/MY_SPACE/repos/my-wiki/browse/",
+	// Markdown header to apply to every page (linking to the real page).
+	// This file is interpreted as a jinja2 template.
+	"markdown_header_template": "markdown-header.md.j2",
 	// The local directory of markdown files to be synced
 	"markdown_dir": "/home/user/dev/my-wiki",
 	// Max parallel Confluence requests

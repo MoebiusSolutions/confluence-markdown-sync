@@ -29,6 +29,18 @@ git clone .../confluence-markdown-sync.git
 cd confluence-markdown-sync/
 ```
 
+Create/customize the markdown header file (which is added to the top of every Confluence page):
+
+```
+cp markdown-header.md.j2.example markdown-header.md.j2
+```
+
+... in particular, you'll want to modify this URL to point to your markdown repo:
+
+```
+...https://bitbucket.example.com/projects/MY_SPACE/repos/my-wiki/browse/...
+```
+
 Create/customize the config file:
 
 ```
