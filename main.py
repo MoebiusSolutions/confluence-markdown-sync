@@ -96,6 +96,7 @@ def _process_markdown_file(acli_command, acli_connection, confluence_space, pare
 		acli_connection,
 		parent_page_id,
 		confluence_space,
+		markdown_filename,
 		temp_content_file)
 
 	# Store the last-synced hash
@@ -166,7 +167,7 @@ def join_throwing_any_exception(worker_pool, jobs):
 	worker_pool.join()
 
 # This would be an in-line lambda, if multiprocessing could use one
-def _lambda_update_confluence_page_by_id(acli_command, acli_connection, parent_page_id, confluence_space, temp_content_file):
+def _lambda_update_confluence_page_by_id(acli_command, acli_connection, parent_page_id, confluence_space, markdown_filename, temp_content_file):
 	_update_confluence_page_as_child(acli_command, acli_connection, confluence_space, parent_page_id, markdown_filename, temp_content_file)
 
 def _main():
@@ -195,7 +196,7 @@ def _main():
 		source_dir,
 		temp_dir, 
 		'README.md',
-		lambda acli_command, acli_connection, parent_page_id, confluence_space, temp_content_file:
+		lambda acli_command, acli_connection, parent_page_id, confluence_space, markdown_filename, temp_content_file:
 			_update_confluence_page_by_id(acli_command, acli_connection, parent_page_id, temp_content_file))
 
 	# Create/update all other .md files
