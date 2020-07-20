@@ -15,6 +15,8 @@ Caveats:
     * Each page contains a link to it's real home (Bitbucket, etc) 
 * The `README.md` content populates a root page
 * All other pages are nested directly beneath it 
+* All page creation/edits will notify anyone monitoring the Confluence space.
+  I haven't figured out how to disable this.
 
 
 Installation
