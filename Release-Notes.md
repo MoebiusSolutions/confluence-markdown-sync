@@ -1,7 +1,7 @@
 Release Notes
 ================
 
-0.2 (IN-DEVELOPMENT)
+0.2 (2023-06-06)
 ----------------
 
 * Replaced calls to "acli" (Bob Swift command line tool) with the
