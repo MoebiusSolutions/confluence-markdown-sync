@@ -31,7 +31,7 @@ git clone .../confluence-markdown-sync.git
 cd confluence-markdown-sync/
 ```
 
-Create/customize the markdown header file (which is added to the top of every Confluence page):
+Create/customize the page template file:
 
 ```
 cp markdown-header.md.j2.example markdown-header.md.j2
@@ -51,15 +51,6 @@ vi config.json
 ```
 
 This file is affected by sections that follow.
-
-
-### Setup ACLI
-
-You'll need to install "Bob Swift" Atlassian CLI (acli) for your your
-pariticular version of the ACLI plugin in Confluence.
-
-Modify your `config.json` to point at your `acli` executable
-and your persisted acli confluence connection.
 
 
 ### Setup Python
@@ -103,11 +94,12 @@ Modify your `config.json` to point at this directory.
 
 ### Run the Scripts
 
-Once everything's setup, here's how you run it:
+Execute the sync process:
 
 ```
 # From this repo's directory
 cd confluence-markdown-sync
+
 pipenv run python main.py --config config.json
 ```
 

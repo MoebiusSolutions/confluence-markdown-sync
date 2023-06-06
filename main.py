@@ -1,3 +1,4 @@
+from atlassian import Confluence
 import os
 from pathlib import Path
 import argparse
@@ -40,44 +41,42 @@ def _get_markdown_files(source_dir):
 	markdown_files.sort()
 	return markdown_files
 
-
-def _dump_confluence_pages_to_json(acli_command, acli_connection, confluence_space, parent_page_id, out_file):
-	_exec(cmd = [
-		acli_command, acli_connection,
-		'--action', 'getPageList',
-		'--space', confluence_space,
-		'--id', parent_page_id,
-		'--descendents',
-		'--outputFormat', '2',
-		'--columns', 'parent id,id,title',
-		'--outputType', 'json',
-		'--file', out_file])
+def _dump_confluence_pages_to_json(confluence, confluence_space, parent_page_id, out_file):
+	child_pages = []
+	start_record = 0
+	limit_records = 100
+	while True:
+		had_result = False
+		for child in confluence.get_page_child_by_type(
+			parent_page_id, type='page', start=start_record, limit=limit_records, expand="body"):
+			had_result = True
+			child_pages.append({"Parent id": parent_page_id, "Id": child["id"], "Title": child["title"]})
+		if not had_result:
+			break
+		start_record += limit_records
+	with open(out_file, 'w') as f:
+		json.dump(child_pages, f, indent=2)
 
 def _get_confluence_child_pages(page_list_dump_file, parent_page_id):
-	with open(page_list_dump_file) as f:
-		raw_pages = json.load(f)
-	child_pages = []
-	for raw_page in raw_pages:
-		child_page = {}
-		for raw_page_entry in raw_page:
-			for key, value in raw_page_entry.items():
-				child_page[key] = value
-
-		# Skip any pages not immediate children (including the parent age itself)
+	with open(page_list_dump_file, 'r') as f:
+		child_pages = json.load(f)
+	result = []
+	for child_page in child_pages:
+		# Skip any pages not immediate children (including the parent page itself)
 		if str(child_page['Parent id']) != parent_page_id:
 			continue
-		child_pages.append(child_page)
-	return child_pages
+		result.append(child_page)
+	return result
 
-def _process_markdown_file(acli_command, acli_connection, confluence_space, parent_page_id, markdown_header_template, source_dir, temp_dir, markdown_filename, update_confluence_page):
+def _process_markdown_file(confluence, confluence_space, parent_page_id, page_template, source_dir, state_dir, markdown_filename, update_confluence_page):
 
 	markdown_file = source_dir/markdown_filename
-	temp_content_file = temp_dir/(markdown_filename+'.confluence')
-	markdown_hash_file = temp_dir/(markdown_filename+'.lastSynced')
+	temp_content_file = state_dir/(markdown_filename+'.confluence')
+	markdown_hash_file = state_dir/(markdown_filename+'.lastSynced')
 
 	# Generate the content for Confluence
 	_generate_confluence_content(
-		markdown_file, temp_content_file, markdown_header_template)
+		markdown_file, temp_content_file, page_template)
 
 	# Read file hashes
 	new_markdown_hash = _read_hash(temp_content_file)
@@ -95,8 +94,7 @@ def _process_markdown_file(acli_command, acli_connection, confluence_space, pare
 
 	# Update the page
 	update_confluence_page(
-		acli_command,
-		acli_connection,
+		confluence,
 		parent_page_id,
 		confluence_space,
 		markdown_filename,
@@ -106,41 +104,30 @@ def _process_markdown_file(acli_command, acli_connection, confluence_space, pare
 	with open(markdown_hash_file, 'w') as f:
 		f.write(new_markdown_hash)
 
-def _generate_confluence_content(markdown_file, confluence_file, markdown_header_template):
-	with open(markdown_header_template, 'r') as f:
+def _generate_confluence_content(markdown_file, confluence_file, page_template):
+	markdown_content = ""
+	with open(markdown_file, 'r') as in_file:
+		markdown_content = in_file.read()
+	with open(page_template, 'r') as f:
 		template = jinja2.Template(f.read())
 	with open(confluence_file, 'w') as f:
-		f.write(template.render(markdown_filename=markdown_file.name))
-	with open(confluence_file, 'a') as out_file:
-		out_file.write('\n')
-		with open(markdown_file) as in_file:
-			for line in in_file:
-				out_file.write(line)
+		f.write(template.render(markdown_filename=markdown_file.name, markdown_content=markdown_content))
 
-def _update_confluence_page_by_id(acli_command, acli_connection, page_id, content_file):
-	_exec(cmd = [
-		acli_command, acli_connection,
-		'--action', 'storePage',
-		'--id', page_id,
-		'--markdown',
-		'--file', str(content_file)])
+def _update_confluence_page_by_id(confluence, page_id, title, content_file):
+	content = ""
+	with open(content_file, 'r') as f:
+		content = f.read()
+	confluence.update_page(page_id, title, content, representation='storage')
 
-def _update_confluence_page_as_child(acli_command, acli_connection, confluence_space, parent_id, title, content_file):
-	_exec(cmd = [
-		acli_command, acli_connection,
-		'--action', 'storePage',
-		'--space', confluence_space,
-		'--parent', parent_id,
-		'--title', title,
-		'--markdown',
-		'--file', str(content_file)])
+def _update_confluence_page_as_child(confluence, confluence_space, parent_id, title, content_file):
+	content = ""
+	with open(content_file, 'r') as f:
+		content = f.read()
+	confluence.update_or_create(parent_id, title, content, representation='storage')
 
-def _delete_confluence_page(acli_command, acli_connection, page_id, page_title):
+def _delete_confluence_page(confluence, page_id, page_title):
 	print('Deleting: '+page_title)
-	_exec([
-		acli_command, acli_connection,
-		'--action', 'removePage',
-		'--id', page_id])
+	confluence.remove_page(page_id, status=None, recursive=False)
 
 def _exec(cmd):
 	print("Executing: %s" % cmd)
@@ -164,13 +151,13 @@ def join_throwing_any_exception(worker_pool, jobs):
 	worker_pool.join()
 
 # This would be an in-line lambda, if multiprocessing could use one
-def _lambda_update_confluence_page_by_id(acli_command, acli_connection, parent_page_id, confluence_space, markdown_filename, temp_content_file):
-	_update_confluence_page_as_child(acli_command, acli_connection, confluence_space, parent_page_id, markdown_filename, temp_content_file)
+def _lambda_update_confluence_page_as_child(confluence, parent_page_id, confluence_space, markdown_filename, temp_content_file):
+	_update_confluence_page_as_child(confluence, confluence_space, parent_page_id, markdown_filename, temp_content_file)
 
 def _main():
 	config = _parse_args_or_exit()
 	source_dir = Path(config['markdown_dir'])
-	temp_dir = Path(config['markdown_dir'])
+	state_dir = Path(config['state_dir'])
 
 	print('')
 	print('[[ Identifying Markdown Files ]]')
@@ -182,34 +169,34 @@ def _main():
 	print('')
 	print('[[ Pushing Pages to Confluence ]]')
 	print('')
+	
+	confluence = Confluence(url=config['confluence_url'], token=config['confluence_token'])
 
 	# Update README.md
 	_process_markdown_file(
-		config['acli_command'],
-		config['acli_connection'],
+		confluence,
 		config['confluence_space'],
 		config['parent_page_id'],
-		config['markdown_header_template'],
+		config['page_template'],
 		source_dir,
-		temp_dir, 
+		state_dir, 
 		'README.md',
-		lambda acli_command, acli_connection, parent_page_id, confluence_space, markdown_filename, temp_content_file:
-			_update_confluence_page_by_id(acli_command, acli_connection, parent_page_id, temp_content_file))
+		lambda confluence, parent_page_id, confluence_space, markdown_filename, temp_content_file:
+			_update_confluence_page_by_id(confluence, parent_page_id, config['root_page_title'], temp_content_file))
 
 	# Create/update all other .md files
 	worker_pool = Pool(processes=config['confluence_threads'])
 	jobs = []
 	for markdown_filename in markdown_files:
 		job = worker_pool.apply_async(_process_markdown_file, [
-			config['acli_command'],
-			config['acli_connection'],
+			confluence,
 			config['confluence_space'],
 			config['parent_page_id'],
-			config['markdown_header_template'],
+			config['page_template'],
 			source_dir,
-			temp_dir,
+			state_dir,
 			markdown_filename,
-			_lambda_update_confluence_page_by_id])
+			_lambda_update_confluence_page_as_child])
 		jobs.append(job)
 	join_throwing_any_exception(worker_pool, jobs)
 
@@ -218,10 +205,9 @@ def _main():
 	print('')
 
 	# Read confluence page list
-	page_list_dump_file = temp_dir/'page_list_dump.json'
+	page_list_dump_file = state_dir/'page_list_dump.json'
 	_dump_confluence_pages_to_json(
-		config['acli_command'],
-		config['acli_connection'],
+		confluence,
 		config['confluence_space'],
 		config['parent_page_id'],
 		page_list_dump_file)
@@ -236,8 +222,7 @@ def _main():
 		# NOTE: We prune 'README.md' as well, since this is the parent page's content
 		if (confluence_child_page['Title'] == 'README.md') or (confluence_child_page['Title'] not in markdown_files_set):
 			_delete_confluence_page(
-				config['acli_command'],
-				config['acli_connection'],
+				confluence,
 				str(confluence_child_page['Id']),
 				confluence_child_page['Title'])
 

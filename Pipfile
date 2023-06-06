@@ -8,6 +8,7 @@ verify_ssl = true
 [packages]
 path = "*"
 jinja2 = "*"
+atlassian-python-api = "*"
 
 [requires]
-python_version = "3.6"
+python_version = "3.8"

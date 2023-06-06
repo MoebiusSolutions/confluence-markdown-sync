@@ -1,21 +1,25 @@
 {
-	// The Atlassian Command Line Interface executable
-	"acli_command": "acli.sh",
-	// The ACLI connection name for confluence (as defined in acli.properties)
-	"acli_connection": "my_confluence",
+	// Base url of the Confluence server
+	"confluence_url": "https://www.trmc.osd.mil/wiki/",
+	// Personal Access Token use to authenticate to the Confluence server
+	"confluence_token": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
 	// The Confluence space to write to
 	"confluence_space": "MY_SPACE",
 	// The ID of the root Confluence page to populate with README.md content
 	// and hang all other pages under. All children of this page that do not
 	// exist in markdown will be pruned.
-	"parent_page_id": "787291112",
-	// The base url of direct links to the markdown files (e.g. the Bitbucket URL)
-	"base_markdown_url": "https://bitbucket.example.net/projects/MY_SPACE/repos/my-wiki/browse/",
-	// Markdown header to apply to every page (linking to the real page).
-	// This file is interpreted as a jinja2 template.
-	"markdown_header_template": "markdown-header.md.j2",
+	"parent_page_id": "999999999",
+	// Template for the body of the Confluence page.
+	// This file is processed as a jinja2 template.
+	"page_template": "page-template.j2",
+	// Title of the root page in Confluence
+	// (e.g. the title applied to what is effectively the README.md)
+	"root_page_title": "My Wiki",
 	// The local directory of markdown files to be synced
 	"markdown_dir": "/home/user/dev/my-wiki",
+	// The local directory to store the state of past synchronization actions
+	// (this can safely be the same as "markdown_dir")
+	"state_dir": "/home/user/dev/my-wiki-state",
 	// Max parallel Confluence requests
 	"confluence_threads": 10
 }
