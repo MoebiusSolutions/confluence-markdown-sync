@@ -1,6 +1,6 @@
 {
 	// Base url of the Confluence server
-	"confluence_url": "https://www.trmc.osd.mil/wiki/",
+	"confluence_url": "https://confluence.example.net/",
 	// Personal Access Token use to authenticate to the Confluence server
 	"confluence_token": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
 	// The Confluence space to write to
@@ -11,15 +11,15 @@
 	"parent_page_id": "999999999",
 	// Template for the body of the Confluence page.
 	// This file is processed as a jinja2 template.
-	"page_template": "page-template.j2",
+	"page_template": "/page-template.j2",
 	// Title of the root page in Confluence
 	// (e.g. the title applied to what is effectively the README.md)
 	"root_page_title": "My Wiki",
 	// The local directory of markdown files to be synced
-	"markdown_dir": "/home/user/dev/my-wiki",
+	"markdown_dir": "/wiki-markdown",
 	// The local directory to store the state of past synchronization actions
 	// (this can safely be the same as "markdown_dir")
-	"state_dir": "/home/user/dev/my-wiki-state",
+	"state_dir": "/wiki-state",
 	// Max parallel Confluence requests
 	"confluence_threads": 10
 }

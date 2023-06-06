@@ -1,0 +1,9 @@
+# Config files
+/config.json
+/page-template.j2
+
+# Python .venv
+!/.venv
+/.venv/*
+!/.venv/.placeholder
+

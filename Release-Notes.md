@@ -11,6 +11,7 @@ Release Notes
 * Added token authentication to the config file
 * Separated `markdown_dir` and `state_dir` configuraion options
 * Added [Release-Notes.md](Release-Notes.md)
+* Added Dockerfile
 
 
 0.1 (2020-07-02)

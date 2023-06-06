@@ -7,99 +7,77 @@ Overview
 This Python script is used to push searchable content from a markdown
 wiki to a Confluence wiki.
 
-Caveats:
+Caveats/Features:
 
-* The pages synced to Confluence are intended to populate search/browse indexes,
+* The pages synced to Confluence are intended for searching/browsing,
+  but they are too ugly for to be the primary viewing interface
   and are not fully functional
-    * Inter-page links are broken. Attachments are not synced.
-    * Each page contains a link to it's real home (Bitbucket, etc) 
-* The `README.md` content populates a root page
-* All other pages are nested directly beneath it 
-* All page creation/edits will notify anyone monitoring the Confluence space.
-  I haven't figured out how to disable this.
+    * Each page contains a link to it's real home (Bitbucket, etc)
+      for proper viewing
+* The `README.md` content populates a the root Confluence page,
+    * All other pages are nested directly beneath it 
+* All page creation/edits may notify anyone monitoring the Confluence space,
+  so be mindful about spam
 
 
-Installation
+Build the Docker Image
 ----------------
-
-### Setup the Scripts
 
 Clone this repo:
 
-```
-git clone .../confluence-markdown-sync.git
-cd confluence-markdown-sync/
-```
+    git clone https://github.com/MoebiusSolutions/confluence-markdown-sync.git
+    cd confluence-markdown-sync/
 
-Create/customize the page template file:
+Build the docker image:
 
-```
-cp markdown-header.md.j2.example markdown-header.md.j2
-```
+    sudo docker build --tag confluence-markdown-sync:local-build .
 
-... in particular, you'll want to modify this URL to point to your markdown repo:
 
-```
-...https://bitbucket.example.com/projects/MY_SPACE/repos/my-wiki/browse/...
-```
+Configuration
+----------------
 
 Create/customize the config file:
 
-```
-cp config.json config.json.example
-vi config.json
-```
+    cp config.json.example config.json
 
-This file is affected by sections that follow.
+Create/customize the page template file:
 
+    cp page-template.j2.example page-template.j2
 
-### Setup Python
+... in particular, you'll want to modify this URL to point to your markdown repo
+(in Bitbucket or wherever):
 
-Install Python 3.6, if not already:
-
-```
-sudo yum install python36
-```
-
-Install PIP in the user's Python libs (`--user` recommended over `sudo`):
-
-```
-pip3 install --user pipenv
-```
-
-Install dependency libs:
-
-```
-# From this repo's directory
-cd confluence-markdown-sync
-pipenv install
-```
-
-Launch a shell with the pipenv active:
-
-```
-pipenv shell
-```
-
-### Prepare the Markdown Source
-
-Clone your markdown repo:
-
-```
-git clone .../my-wiki.git
-```
-
-Modify your `config.json` to point at this directory.
+    ...https://bitbucket.example.com/projects/MY_SPACE/repos/my-wiki/browse/...
 
 
-### Run the Scripts
+Execution
+----------------
 
 Execute the sync process:
 
-```
-# From this repo's directory
-cd confluence-markdown-sync
+    # From this repo's directory
+    cd confluence-markdown-sync
 
-pipenv run python main.py --config config.json
-```
+    sudo docker run --rm -it \
+        -u "$(id -u):$(id -g)" \
+        --security-opt label=disable \
+        -v "$PWD/page-template.j2:/page-template.j2:ro" \
+        -v "$PWD/config.json:/config.json:ro" \
+        -v "$HOME/my-wiki:/wiki-markdown:ro" \
+        -v "$HOME/my-wiki-state:/wiki-state:rw" \
+        confluence-markdown-sync:local-build --config /config.json
 
+... where:
+
+* `-u "$(id -u):$(id -g)"`:
+  It is generally helpful to run as the host user/group when mounting
+  directories from the host.
+
+* `--security-opt label=disable`:
+  This avoids permissions issues that can come from SELinux when using
+  mounts from the hsot.
+
+Other Notes
+----------------
+
+[Release Notes](Release-Notes.md)
