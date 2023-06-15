@@ -7,6 +7,7 @@ import subprocess
 import hashlib
 from multiprocessing import Pool
 import jinja2
+import markdown
 
 # A version of argparse.ArgumentParser, that report errors
 # with a non-zero exit code
@@ -108,6 +109,7 @@ def _generate_confluence_content(markdown_file, confluence_file, page_template):
 	markdown_content = ""
 	with open(markdown_file, 'r') as in_file:
 		markdown_content = in_file.read()
+	markdown_content = markdown.markdown(markdown_content, extensions=['tables', 'fenced_code'])
 	with open(page_template, 'r') as f:
 		template = jinja2.Template(f.read())
 	with open(confluence_file, 'w') as f:

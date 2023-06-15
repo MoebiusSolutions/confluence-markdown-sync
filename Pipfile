@@ -9,6 +9,7 @@ verify_ssl = true
 path = "*"
 jinja2 = "*"
 atlassian-python-api = "*"
+markdown = "*"
 
 [requires]
 python_version = "3.8"
