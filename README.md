@@ -49,6 +49,11 @@ Create/customize the page template file:
 
     ...https://bitbucket.example.com/projects/MY_SPACE/repos/my-wiki/browse/...
 
+You can look at the raw syntax of any existing Confluence page
+with the **View Storage Format** option in the page menu.
+This should help you craft your own template.
+Note that the rendered Markdown content comes out as vanilla HTML.
+
 
 Execution
 ----------------
