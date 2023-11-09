@@ -4,6 +4,7 @@ Release Notes
 0.3 (IN-DEVELOPMENT)
 ----------------
 
+* Added `LICENSE` file (MIT)
 * ...
 
 
