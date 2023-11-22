@@ -1,5 +1,4 @@
-<h1>Page moved to: <a href="https://bitbucket.example.com/projects/MY_SPACE/repos/my-wiki/browse/{{ markdown_filename }}">{{ markdown_filename }}</a></h1>
-<p>(The content below is simply a read-only copy of the page for Confluence search purposes.)</p>
-<ac:structured-macro ac:name="code" ac:schema-version="1" ac:macro-id="03f93f87-1be2-455d-aa4a-6f17eed26560">
-<ac:plain-text-body>
-<![CDATA[{{ markdown_content }}]]></ac:plain-text-body></ac:structured-macro>
+<h1 style="color: rgb(255,0,0);">See current page: <a href="https://bitbucket.example.com/projects/MY_SPACE/repos/my-wiki/browse/{{ markdown_filename }}">{{ markdown_filename }}</a></h1>
+<p style="color: rgb(255,0,0);">The content below is simply a read-only copy of the page for Confluence search purposes.</p>
+<p><a href="https://bitbucket.example.com/projects/MY_SPACE/repos/my-wiki/browse/README.md">Wiki Home</a></p>
+{{ markdown_content }}

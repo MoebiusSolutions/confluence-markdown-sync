@@ -5,6 +5,8 @@ Release Notes
 ----------------
 
 * Added `LICENSE` file (MIT)
+* Updated example page template so that html elements are rendered naturally
+  (not wrapped in code block)
 * ...
 
 

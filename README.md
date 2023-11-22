@@ -80,7 +80,7 @@ Execute the sync process:
 
 * `--security-opt label=disable`:
   This avoids permissions issues that can come from SELinux when using
-  mounts from the hsot.
+  mounts from the host.
 
 Other Notes
 ----------------
